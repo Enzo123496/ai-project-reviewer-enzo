@@ -1,0 +1,73 @@
+{
+  "llm": {
+    "active": "lmstudio",
+    "fallback": null,
+    "maxAttempts": 3,
+    "initialBackoffMs": 2000,
+    "cacheEnabled": true,
+    "temperature": 0.0,
+    "maxTokens": 1500,
+    "outputLanguage": "French",
+    "providers": [
+      { "name": "lmstudio", "type": "openai-compatible", "baseUrl": "http://localhost:1234/v1",
+        "model": "mistralai/mistral-7b-instruct-v0.3", "apiKeyEnv": null, "responseFormat": "none", "timeoutSeconds": 180 },
+      { "name": "ollama", "type": "openai-compatible", "baseUrl": "http://localhost:11434/v1",
+        "model": "llama3.1:8b", "apiKeyEnv": null, "responseFormat": "json_object", "timeoutSeconds": 180 },
+      { "name": "mistral-api", "type": "openai-compatible", "baseUrl": "https://api.mistral.ai/v1",
+        "model": "mistral-small-latest", "apiKeyEnv": "MISTRAL_API_KEY", "responseFormat": "json_object", "timeoutSeconds": 90 },
+      { "name": "deepseek-api", "type": "openai-compatible", "baseUrl": "https://api.deepseek.com/v1",
+        "model": "deepseek-chat", "apiKeyEnv": "DEEPSEEK_API_KEY", "responseFormat": "json_object", "timeoutSeconds": 90 },
+      { "name": "mock", "type": "mock" }
+    ]
+  },
+  "context": { "maxCharsPerChunk": 12000, "maxChunksPerCriterion": 4, "parallelCriteria": 1 },
+  "selection": {
+    "excludeGlobs": ["**/target/**", "**/build/**", "**/out/**", "**/.git/**", "**/node_modules/**",
+                     "**/*.class", "**/*.jar", "**/.env", "**/*.pem", "**/*.key", "**/id_rsa*"],
+    "maxFileSizeBytes": 200000
+  },
+  "sandbox": {
+    "image": "reviewer-sandbox:latest", "memory": "1500m", "cpus": "1.0", "pidsLimit": 256, "timeoutSeconds": 300,
+    "command": ["sh", "-c", "cp -r /workspace /tmp/build && cp -r /opt/m2 /tmp/m2 && cd /tmp/build && timeout -s KILL 280 mvn -B -o -Dmaven.repo.local=/tmp/m2 test"]
+  },
+  "report": { "outputDirectory": "reports", "pdfMode": "none", "latexImage": "reviewer-latex:latest" },
+  "criteria": [
+    { "id": "architecture", "name": "Architecture et séparation des responsabilités", "maxScore": 10, "weight": 2,
+      "analyzer": "llm-structure", "fileTypes": ["JAVA_SOURCE", "BUILD"],
+      "description": "Layering, separation of responsibilities (UI / business logic / infrastructure), coupling between packages, cohesion of classes, relevance of design patterns." },
+    { "id": "readability", "name": "Lisibilité du code", "maxScore": 10, "weight": 1,
+      "analyzer": "llm-code", "fileTypes": ["JAVA_SOURCE"],
+      "description": "Naming, method length, comments, consistent style, absence of dead code and magic numbers." },
+    { "id": "exceptions", "name": "Gestion des exceptions", "maxScore": 10, "weight": 1,
+      "analyzer": "llm-code", "fileTypes": ["JAVA_SOURCE"],
+      "description": "Appropriate exception types, no swallowed exceptions (empty catch), meaningful messages, resources closed (try-with-resources), no catch of generic Exception without reason." },
+    { "id": "solid", "name": "Respect des principes SOLID", "maxScore": 10, "weight": 1,
+      "analyzer": "llm-code", "fileTypes": ["JAVA_SOURCE"],
+      "description": "Single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion (depending on abstractions)." },
+    { "id": "security", "name": "Sécurité", "maxScore": 10, "weight": 1,
+      "analyzer": "llm-code", "fileTypes": ["JAVA_SOURCE", "CONFIG", "DOCKER", "SCRIPT"],
+      "description": "Hard-coded secrets, injection risks (SQL, command, path), unsafe deserialization, input validation, sensitive data in logs." },
+    { "id": "tests", "name": "Présence et qualité apparente des tests", "maxScore": 10, "weight": 1,
+      "analyzer": "test-presence",
+      "description": "Deterministic count of test files, test methods and assertions." },
+    { "id": "documentation", "name": "Documentation", "maxScore": 10, "weight": 1,
+      "analyzer": "documentation",
+      "description": "README content and Javadoc coverage of public types." },
+    { "id": "docker", "name": "Qualité du Dockerfile", "maxScore": 10, "weight": 0.5,
+      "analyzer": "dockerfile",
+      "description": "Pinned base image, non-root user, multi-stage build, no secrets, .dockerignore." },
+    { "id": "build-and-tests", "name": "Compilation et tests en bac à sable", "maxScore": 10, "weight": 1,
+      "analyzer": "sandbox-build",
+      "description": "Builds and runs the tests of the project inside an isolated Docker container (no network)." }
+  ],
+  "profiles": [
+    { "name": "complet", "description": "Tous les critères sauf l'exécution",
+      "criteria": ["architecture", "readability", "exceptions", "solid", "security", "tests", "documentation", "docker"] },
+    { "name": "rapide", "description": "Un seul appel LLM + analyses déterministes",
+      "criteria": ["architecture", "tests", "documentation", "docker"] },
+    { "name": "sans-llm", "description": "Uniquement les analyses déterministes (hors ligne)",
+      "criteria": ["tests", "documentation", "docker"] },
+    { "name": "complet-avec-execution", "description": "Tout, y compris l'exécution dans Docker (VM recommandée)",
+      "criteria": ["architecture", "readability", "exceptions", "solid", "security", "tests", "documentation", "docker", "build-and-tests"] }
+  ]
+}

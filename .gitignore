@@ -1,0 +1,13 @@
+target/
+reports/
+*.class
+*.log
+.idea/
+*.iml
+.vscode/
+.DS_Store
+# Secrets : ne JAMAIS committer
+.env
+*.env
+*.pem
+*.key

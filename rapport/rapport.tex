@@ -1,0 +1,103 @@
+% =====================================================================================
+%  RAPPORT TECHNIQUE — AI Project Reviewer
+%  Squelette : chaque section indique QUI la rédige (M1..M7, voir GUIDE_PROJET.md) et CE QU'ELLE
+%  DOIT CONTENIR. Rédigez avec vos propres mots : le jury vérifie que vous maîtrisez vos choix.
+%  Compiler : pdflatex rapport.tex (deux fois)
+% =====================================================================================
+\documentclass[11pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+\IfFileExists{french.ldf}{\usepackage[french]{babel}}{}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{booktabs,tabularx,longtable,xcolor,hyperref,listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single,language=Java}
+\newcommand{\todo}[1]{\par\noindent\colorbox{yellow!30}{\parbox{\dimexpr\linewidth-2\fboxsep}{\textbf{À rédiger :} #1}}\par}
+
+\title{AI Project Reviewer\\\large Plateforme d'évaluation automatique de projets assistée par IA}
+\author{Groupe de 7 : M1 \and M2 \and M3 \and M4 \and M5 \and M6 \and M7}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\chapter{Problématique}                                  % M1
+\todo{Pourquoi évaluer automatiquement ? Pourquoi un LLM seul ne suffit pas (non déterministe, contexte limité, manipulable) ? Les 8 problèmes d'architecture listés au §1 du sujet.}
+
+\chapter{Exigences fonctionnelles}                       % M1
+\todo{Les 10 fonctionnalités du §2 du sujet, sous forme de tableau « exigence / classe(s) qui la réalisent ».}
+
+\chapter{Architecture générale}                          % M1
+\todo{Couches (ui, application, analysis, llm, project, security, report, persistence, config). Règle de dépendance : l'IHM ne connaît que ReviewerFacade ; seul AppFactory connaît les classes concrètes.}
+
+\section{Diagramme des composants principaux}            % M1
+\todo{Diagramme UML de composants ou de packages (PlantUML/draw.io exporté en PDF, puis \textbackslash includegraphics).}
+
+\section{Parcours d'une analyse}                          % M5
+\todo{Diagramme de séquence : clic « Lancer » → Facade → EvaluationEngine → Analyzer → LlmProvider (décorateurs) → parser → agrégation → Observer → rapport.}
+
+\chapter{Choix technologiques}                           % M1
+\todo{Java 17 sans framework (architecture visible), Swing (inclus au JDK, aucune dépendance), Jackson (JSON), JUnit 5, API HTTP « compatible OpenAI » (couvre LM Studio, Ollama, Mistral, DeepSeek), Docker, pdflatex. Pour chaque choix : alternative écartée et pourquoi.}
+
+\chapter{Répartition des tâches}                         % M1
+\todo{Tableau membre / responsabilité / packages / tests / sections du rapport.}
+
+\chapter{Design Patterns}                                % chacun rédige SES patterns
+\todo{Pour CHAQUE pattern : problème concret rencontré, solution, classes concernées (extrait de code court), bénéfice mesurable (ex. « ajouter un fournisseur = 0 ligne modifiée »), limite. Ajouter une section « patterns volontairement non utilisés ».}
+\section{Strategy}          % M5 (Analyzer) et M2 (FileSelectionStrategy)
+\section{Adapter}           % M3
+\section{Decorator}         % M3
+\section{Factory}           % M3 (LlmProviderFactory), M2 (ProjectLoaderFactory), M5 (AnalyzerRegistry)
+\section{Template Method}   % M5
+\section{Builder}           % M4 (PromptBuilder), M7 (LatexDocumentBuilder)
+\section{Composite}         % M2
+\section{Observer}          % M5 / M7
+\section{Facade}            % M1
+\section{Patterns non retenus} % M1
+
+\chapter{Fonctionnement du moteur d'analyse}              % M5
+\todo{Registre d'analyseurs, reprise partielle (un critère en échec n'arrête pas les autres), calcul de la note globale, analyses déterministes vs LLM, faits mesurés injectés dans les prompts.}
+
+\chapter{Intégration des LLM}                             % M3
+\todo{Interface LlmProvider, adaptateur, empilement des décorateurs, choix du modèle local, justification.}
+
+\section{Gestion du contexte}                             % M4
+\todo{Sélection, découpage (Chunker), résumé structurel (StructureSummarizer), agrégation, limite du nombre d'appels, cache.}
+
+\chapter{Stratégie de construction des prompts}           % M4
+\todo{Rôle, critère, faits, données encadrées par nonce, format JSON imposé, rappel final, requête de correction.}
+
+\chapter{Gestion des erreurs}                             % M3 et M4
+\todo{Tableau : panne (timeout, HTTP, serveur arrêté, vide, malformé, hors schéma, incohérent) → détection → réaction (retry, repli, correction, statut PARTIAL/FAILED) → test qui le prouve.}
+
+\chapter{Génération du rapport}                           % M7
+\todo{Séparation résultat / modèle Java / rendu LaTeX ; échappement (et le bug des crochets trouvé en relisant le PDF) ; structure indépendante du LLM ; compilation PDF sécurisée.}
+
+\chapter{Stratégie de test}                               % M1 (coordination), chacun ses tests
+\todo{Pyramide de tests, doublures (ScriptedLlmProvider, faux serveur HTTP, faux ProcessRunner), tests d'intégration sans IHM, résultats (nombre de tests).}
+
+\chapter{Architecture de sécurité}                        % M6
+\todo{Modèle de menaces : tableau menace / impact / parade / limite (Zip Slip, zip bomb, liens symboliques, exécution de code, injection de prompt, injection LaTeX, fuite de secrets, épuisement de ressources).}
+\section{Isolation Docker}                                % M6
+\section{Utilisation de la machine virtuelle}             % M6
+\section{Injection de prompt}                             % M4
+
+\chapter{Limites de la solution}                          % tous
+\chapter{Améliorations possibles}                         % tous
+\chapter{Bilan du projet}                                 % tous (bilan individuel court de chaque membre)
+
+\appendix
+\chapter{Réponses aux questions du sujet}                 % M1 relit, chacun rédige la sienne
+\begin{enumerate}
+  \item Quelles sont les principales responsabilités du système ?  % M1
+  \item Comment les avez-vous séparées ?                           % M1
+  \item Quels Design Patterns et pourquoi ?                        % M5
+  \item Comment remplacer le LLM actuel ?                          % M3
+  \item Comment ajouter un critère d'évaluation ?                  % M5
+  \item Comment tester sans appeler réellement un LLM ?            % M4
+  \item Comment gérer une réponse invalide du modèle ?             % M4
+  \item Comment empêcher un projet analysé d'endommager la machine ? % M6
+  \item Quels sont les principaux points de couplage ?             % M1
+\end{enumerate}
+\end{document}
